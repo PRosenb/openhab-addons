@@ -85,42 +85,51 @@ public class GenericBluetoothHandler extends ConnectedBluetoothHandler {
         readCharacteristicJob = scheduler.scheduleWithFixedDelay(() -> {
             if (device.getConnectionState() == ConnectionState.CONNECTED) {
                 if (resolved) {
-                    // add all characteristics so that the loop below covers them all from the beginning
-                    // TODO can this be skipped with a check if all are initialized?
+                    // go through all characteristics
                     this.device.getServices().forEach((service) -> {
-                        service.getCharacteristics().forEach((characteristic) -> {// characteristic.getDescriptors()
+                        service.getCharacteristics().forEach((characteristic) -> {
+                            CharacteristicHandler charHandler;
                             if (device.canNotify(characteristic)) {
-                                charHandlers.computeIfAbsent(characteristic, CharacteristicHandler::new);
-                            }
-                        });
-                    });
-                    for (CharacteristicHandler charHandler : charHandlers.values()) {
-                        if (charHandler.canRead()) {
-                            device.readCharacteristic(charHandler.characteristic);
-                            try {
-                                // TODO the ideal solution would be to use locks/conditions and timeouts
-                                // between this code and `onCharacteristicReadComplete` but
-                                // that would overcomplicate the code a bit and I plan
-                                // on implementing a better more generalized solution later
-                                Thread.sleep(50);
-                            } catch (InterruptedException e) {
-                                return;
+                                // If notifications can be enabled, we create the CharacteristicHandler
+                                // if it not exists so that we can register notifications.
+                                charHandler = charHandlers.computeIfAbsent(characteristic, CharacteristicHandler::new);
+                            } else {
+                                // Otherwise we let it being created by getCharacteristicHandler() and do
+                                // nothing here if it is not created yet.
+                                charHandler = charHandlers.get(characteristic);
                             }
 
-                            if (device.canNotify(charHandler.characteristic)) {
-                                ChannelUID channelUID = charHandler.getChannelUID(null);
-                                if (isLinked(channelUID)) {
-                                    if (!device.isNotifying(charHandler.characteristic)) {
-                                        device.enableNotifications(charHandler.characteristic);
+                            if (charHandler != null) {
+                                // Only read the value manually if notification is not on.
+                                // Also read it the first time before we activate notifications below.
+                                if (!device.isNotifying(characteristic) && charHandler.canRead()) {
+                                    device.readCharacteristic(characteristic);
+                                    try {
+                                        // TODO the ideal solution would be to use locks/conditions and timeouts
+                                        // between this code and `onCharacteristicReadComplete` but
+                                        // that would overcomplicate the code a bit and I plan
+                                        // on implementing a better more generalized solution later
+                                        Thread.sleep(50);
+                                    } catch (InterruptedException e) {
+                                        return;
                                     }
-                                } else {
-                                    if (device.isNotifying(charHandler.characteristic)) {
-                                        device.disableNotifications(charHandler.characteristic);
+                                }
+                                if (device.canNotify(characteristic)) {
+                                    ChannelUID channelUID = charHandler.getChannelUID(null);
+                                    // Enabled/Disable notifications dependent on if the channel is linked.
+                                    if (isLinked(channelUID)) {
+                                        if (!device.isNotifying(characteristic)) {
+                                            device.enableNotifications(characteristic);
+                                        }
+                                    } else {
+                                        if (device.isNotifying(characteristic)) {
+                                            device.disableNotifications(characteristic);
+                                        }
                                     }
                                 }
                             }
-                        }
-                    }
+                        });
+                    });
                 } else {
                     // if we are connected and still haven't been able to resolve the services, try disconnecting and
                     // then connecting again
