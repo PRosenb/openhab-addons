@@ -58,6 +58,7 @@ import org.sputnikdev.bluetooth.gattparser.spec.Field;
  * channels based off of a bluetooth device's GATT characteristics.
  *
  * @author Connor Petty - Initial contribution
+ * @author Peter Rosenberg - Use notifications
  *
  */
 @NonNullByDefault
@@ -84,6 +85,15 @@ public class GenericBluetoothHandler extends ConnectedBluetoothHandler {
         readCharacteristicJob = scheduler.scheduleWithFixedDelay(() -> {
             if (device.getConnectionState() == ConnectionState.CONNECTED) {
                 if (resolved) {
+                    // add all characteristics so that the loop below covers them all from the beginning
+                    // TODO can this be skipped with a check if all are initialized?
+                    this.device.getServices().forEach((service) -> {
+                        service.getCharacteristics().forEach((characteristic) -> {// characteristic.getDescriptors()
+                            if (device.canNotify(characteristic)) {
+                                charHandlers.computeIfAbsent(characteristic, CharacteristicHandler::new);
+                            }
+                        });
+                    });
                     for (CharacteristicHandler charHandler : charHandlers.values()) {
                         if (charHandler.canRead()) {
                             device.readCharacteristic(charHandler.characteristic);
@@ -95,6 +105,19 @@ public class GenericBluetoothHandler extends ConnectedBluetoothHandler {
                                 Thread.sleep(50);
                             } catch (InterruptedException e) {
                                 return;
+                            }
+
+                            if (device.canNotify(charHandler.characteristic)) {
+                                ChannelUID channelUID = charHandler.getChannelUID(null);
+                                if (isLinked(channelUID)) {
+                                    if (!device.isNotifying(charHandler.characteristic)) {
+                                        device.enableNotifications(charHandler.characteristic);
+                                    }
+                                } else {
+                                    if (device.isNotifying(charHandler.characteristic)) {
+                                        device.disableNotifications(charHandler.characteristic);
+                                    }
+                                }
                             }
                         }
                     }
