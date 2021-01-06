@@ -14,7 +14,9 @@ package org.openhab.binding.bluetooth;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.measure.quantity.Power;
@@ -38,15 +40,18 @@ import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.thing.binding.BridgeHandler;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
+import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.openhab.core.types.UnDefType;
+import org.openhab.core.util.HexUtils;
 
 /**
  * This is a handler for generic Bluetooth devices in beacon-mode (i.e. not connected), which at the same time can be
  * used as a base implementation for more specific thing handlers.
  *
  * @author Kai Kreuzer - Initial contribution and API
+ * @author Peter Rosenberg - Add support for ServiceData
  */
 @NonNullByDefault
 public class BeaconBluetoothHandler extends BaseThingHandler implements BluetoothDeviceListener {
@@ -225,6 +230,35 @@ public class BeaconBluetoothHandler extends BaseThingHandler implements Bluetoot
         int rssi = scanNotification.getRssi();
         if (rssi != Integer.MIN_VALUE) {
             updateRSSI(rssi);
+        }
+
+        Map<String, byte[]> serviceData = scanNotification.getServiceData();
+        if (serviceData != null) {
+            ThingBuilder builder = editThing();
+            boolean changed = false;
+            for (String uuid : serviceData.keySet()) {
+                if (getThing().getChannel(uuid) == null) {
+                    Map<String, String> properties = new HashMap<>();
+                    properties.put(BluetoothBindingConstants.PROPERTY_SERVICE_UUID, uuid);
+                    Channel channel = ChannelBuilder.create(new ChannelUID(thing.getUID(), uuid))
+                            .withType(new ChannelTypeUID(BluetoothBindingConstants.BINDING_ID, "service-unknown"))
+                            .withProperties(properties).build();
+                    builder.withChannel(channel);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                updateThing(builder.build());
+            }
+            for (String uuid : serviceData.keySet()) {
+                byte[] valueBytes = serviceData.get(uuid);
+                if (valueBytes != null) {
+                    String hex = HexUtils.bytesToHex(valueBytes);
+                    updateState(uuid, new StringType(hex));
+                } else {
+                    updateState(uuid, UnDefType.NULL);
+                }
+            }
         }
     }
 
