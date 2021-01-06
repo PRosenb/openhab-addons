@@ -12,6 +12,12 @@
 		<state readOnly="true" pattern="%d dBm"/>
 	</channel-type>
 
+	<channel-type id="service-unknown">
+		<item-type>String</item-type>
+		<label>Unknown Bluetooth Service from ServiceData</label>
+		<description>The raw value of the characteristic of the unknown service is represented with hexadecimal</description>
+	</channel-type>
+
 	<channel-type id="adapter-uid">
 		<item-type>String</item-type>
 		<label>Adapter UID</label>
