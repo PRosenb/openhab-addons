@@ -32,12 +32,14 @@ public class BluetoothDeviceSnapshot extends BluetoothDiscoveryDevice {
     private @Nullable String name;
     private @Nullable Integer manufacturer;
     private @Nullable Integer txPower;
+    private @Nullable Integer rssi;
 
     public BluetoothDeviceSnapshot(BluetoothDevice device) {
         super(device);
         this.txPower = device.getTxPower();
         this.manufacturer = device.getManufacturerId();
         this.name = device.getName();
+        this.rssi = device.getRssi();
     }
 
     @Override
@@ -146,6 +148,7 @@ public class BluetoothDeviceSnapshot extends BluetoothDiscoveryDevice {
         Integer manufacturer = this.manufacturer;
         Integer txPower = this.txPower;
         String name = this.name;
+        Integer rssi = this.rssi;
 
         String model = this.model;
         String serialNumber = this.serialNumber;
@@ -159,6 +162,7 @@ public class BluetoothDeviceSnapshot extends BluetoothDiscoveryDevice {
         result = prime * result + ((manufacturer == null) ? 0 : manufacturer.hashCode());
         result = prime * result + ((model == null) ? 0 : model.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((rssi == null) ? 0 : rssi.hashCode());
         result = prime * result + ((serialNumber == null) ? 0 : serialNumber.hashCode());
         result = prime * result + ((softwareRevision == null) ? 0 : softwareRevision.hashCode());
         result = prime * result + ((txPower == null) ? 0 : txPower.hashCode());
@@ -187,6 +191,9 @@ public class BluetoothDeviceSnapshot extends BluetoothDiscoveryDevice {
             return false;
         }
         if (!Objects.equals(name, other.name)) {
+            return false;
+        }
+        if (!Objects.equals(rssi, other.rssi)) {
             return false;
         }
         if (!Objects.equals(model, other.model)) {
