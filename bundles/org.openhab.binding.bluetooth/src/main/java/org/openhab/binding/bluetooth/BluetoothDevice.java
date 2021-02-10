@@ -266,7 +266,7 @@ public abstract class BluetoothDevice {
      *
      * @param characteristic the {@link BluetoothCharacteristic} to check if notifications are enabled.
      * @return true if notification is enabled, false if notification is disabled, characteristic is missing on device
-     *         or notification are not supported.
+     *         or notifications are not supported.
      */
     public abstract boolean isNotifying(BluetoothCharacteristic characteristic);
 
