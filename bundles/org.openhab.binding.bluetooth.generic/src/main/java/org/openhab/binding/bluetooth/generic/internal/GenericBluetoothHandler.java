@@ -85,7 +85,7 @@ public class GenericBluetoothHandler extends ConnectedBluetoothHandler {
         readCharacteristicJob = scheduler.scheduleWithFixedDelay(() -> {
             if (device.getConnectionState() == ConnectionState.CONNECTED) {
                 if (resolved) {
-                    // go through all characteristics
+                    // go through all characteristics of all services
                     this.device.getServices().forEach((service) -> {
                         service.getCharacteristics().forEach((characteristic) -> {
                             CharacteristicHandler charHandler;
