@@ -230,6 +230,8 @@ public class BeaconBluetoothHandler extends BaseThingHandler implements Bluetoot
         int rssi = scanNotification.getRssi();
         if (rssi != Integer.MIN_VALUE) {
             updateRSSI(rssi);
+        } else {
+            updateStatus(ThingStatus.ONLINE);
         }
 
         Map<String, byte[]> serviceData = scanNotification.getServiceData();
