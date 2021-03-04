@@ -58,6 +58,10 @@ import org.openhab.core.util.HexUtils;
 @NonNullByDefault
 public class BeaconBluetoothHandler extends BaseThingHandler implements BluetoothDeviceListener {
 
+    /**
+     * https://www.bluetooth.com/specifications/assigned-numbers/
+     * GATT Service: 0x181A: Environmental Sensing
+     */
     public static final String SERVICE_UUID_ENVIRONMENTAL_SENSING = "0000181a-0000-1000-8000-00805f9b34fb";
 
     @NonNullByDefault({} /* non-null if initialized */)
