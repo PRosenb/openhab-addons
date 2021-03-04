@@ -251,7 +251,7 @@ public class BeaconBluetoothHandler extends BaseThingHandler implements Bluetoot
      *
      * Broadcast configuration to configure what to advertise in service data
      * https://www.bluetooth.com/specifications/specs/core-specification-5-2/
-     * Chapter 2.7 CONFIGURED BROADCAST
+     * 2.7 CONFIGURED BROADCAST
      *
      * @param scanNotification to get serviceData from
      */
